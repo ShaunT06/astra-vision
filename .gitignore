@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.env
+.venv/
+data/
+models/*.pt
+models/*.pth
+uploads/
+*.db
+.pytest_cache/
+.claude/

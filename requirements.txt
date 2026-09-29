@@ -1,0 +1,16 @@
+torch
+torchvision
+timm
+transformers
+pytorch-grad-cam
+fastapi
+uvicorn[standard]
+python-multipart
+pillow
+scikit-learn
+imagehash
+matplotlib
+numpy
+pytest
+httpx
+python-dotenv
