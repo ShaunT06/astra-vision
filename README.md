@@ -23,7 +23,7 @@ Held-out, 117 cleaned images, group-aware 5-fold CV × 3 repeats:
 ## Architecture
 
 ```mermaid
-flowchart LR
+flowchart TD
     U[User] --> FE[React front end]
     FE -->|image upload| API[FastAPI backend]
     API --> V[Validation and preprocessing]
