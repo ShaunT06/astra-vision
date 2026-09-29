@@ -20,6 +20,28 @@ Held-out, 117 cleaned images, group-aware 5-fold CV × 3 repeats:
 - The dataset is small and skews to old photos, so real-world accuracy will be lower. See [limitations](docs/technical-details.md#limitations).
 - Full metrics are in [`reports/`](reports/).
 
+## Architecture
+
+```mermaid
+flowchart LR
+    U[User] --> FE[React front end]
+    FE -->|image upload| API[FastAPI backend]
+    API --> V[Validation and preprocessing]
+    V --> ENC[Frozen encoder<br/>SigLIP 2 or EfficientNet-B0]
+    ENC --> H[Linear head]
+    H --> CAL[Calibration<br/>top-3 and uncertainty flag]
+    V --> OOD[Out-of-distribution gate]
+    V --> DET[OWLv2 detector<br/>crops classified by head]
+    CAL --> XAI[Grad-CAM heatmap]
+    CAL --> EXP[Explanation]
+    OOD --> EXP
+    EXP --> DB[(SQLite history)]
+    XAI --> FE
+    EXP --> FE
+```
+
+Every classifier is a frozen pretrained encoder plus a small linear head, so one calibration, Grad-CAM and evaluation path serves all models. More in [technical details](docs/technical-details.md#architecture).
+
 ## Features
 
 - 5 classes: aircraft, helicopter, drone/UAV, land vehicle, naval vessel
