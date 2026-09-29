@@ -1,0 +1,17 @@
+{
+  "siglip-zeroshot": {
+    "temperature": 0.505,
+    "min_confidence": 0.5,
+    "min_margin": 0.1
+  },
+  "siglip-probe": {
+    "temperature": 0.476,
+    "min_confidence": 0.5,
+    "min_margin": 0.1
+  },
+  "effnet-probe": {
+    "temperature": 1.103,
+    "min_confidence": 0.79,
+    "min_margin": 0.1
+  }
+}

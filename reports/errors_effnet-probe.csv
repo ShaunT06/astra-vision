@@ -1,0 +1,10 @@
+file_name,true,predicted,confidence
+images/aircraft/001-F-22-Flaring-Cherry-Festival-jpg.jpg,Military Aircraft,Drone / UAV,0.784
+images/aircraft/006-J50MOCKUP-jpg.jpg,Military Aircraft,Drone / UAV,0.647
+images/drone/004-3D-Printed-Precision-U-S-Army-Leverages-FPV-and-Delivery-Dro.jpg,Drone / UAV,Military Helicopter,0.986
+images/drone/010-A-team-of-technicians-prepares-for-the-inaugural-flight-of-a.jpg,Drone / UAV,Military Aircraft,0.865
+images/drone/025-CDFP-Runway-jpg.jpg,Drone / UAV,Military Aircraft,0.535
+images/drone/028-Delaer-RX3-drawing-png.png,Drone / UAV,Naval Vessel,0.353
+images/drone/030-DHS-Secretary-Alejandro-Mayorkas-Departs-Panama-528-jpg.jpg,Drone / UAV,Military Helicopter,0.936
+images/helicopter/017-Army-Aviation-and-Allied-Partners-Conduct-Media-Day-in-Finla.jpg,Military Helicopter,Drone / UAV,0.572
+images/naval/027-Little-Rebel-jpg.jpg,Naval Vessel,Drone / UAV,0.604
