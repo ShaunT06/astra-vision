@@ -10,7 +10,7 @@
 ![Accuracy](https://img.shields.io/badge/held--out%20accuracy-99.2%25-brightgreen)
 ![Cost](https://img.shields.io/badge/cost-%240-informational)
 
-[Live demo](https://sentinel-vision.vercel.app) · [Results](#results-held-out) · [Features](#features) · [Quick start](#setup) · [API](#api) · [Limitations](#limitations)
+[Live demo](https://sentinel-vision-seven.vercel.app) · [Results](#results-held-out) · [Features](#features) · [Quick start](#setup) · [API](#api) · [Limitations](#limitations)
 
 </div>
 
@@ -20,7 +20,7 @@ Upload an image → the system identifies the defence object (military aircraft,
 
 Everything is **free and runs locally**: open-weight models, no paid APIs, no API keys.
 
-**Live demo: [sentinel-vision.vercel.app](https://sentinel-vision.vercel.app)** (ONNX classifier; heatmaps and multi-object detection need the full backend, see [Web app](#web-app-web)).
+**Live demo: [sentinel-vision-seven.vercel.app](https://sentinel-vision-seven.vercel.app)** (ONNX classifier; heatmaps and multi-object detection need the full backend, see [Web app](#web-app-web)).
 
 ---
 

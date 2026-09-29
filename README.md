@@ -2,7 +2,7 @@
 
 Explainable defence object recognition. Upload an image and get the class, a calibrated confidence, top-3 alternatives, a Grad-CAM heatmap and a plain-English explanation. It warns when unsure and rejects images with no defence object.
 
-**[Live demo](https://sentinel-vision.vercel.app)** · [How the model works](docs/model-explained.md) · [Technical details](docs/technical-details.md) · Challenge 02 (ASTRA 3-Day Build), solo entry
+**[Live demo](https://sentinel-vision-seven.vercel.app)** · [How the model works](docs/model-explained.md) · [Technical details](docs/technical-details.md) · Challenge 02 (ASTRA 3-Day Build), solo entry
 
 Free and local: open-weight models, no paid APIs, no API keys.
 
