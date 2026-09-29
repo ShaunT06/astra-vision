@@ -81,30 +81,6 @@ def _embed(st, img):
     return pooled / np.linalg.norm(pooled)
 
 
-def _locate(st, img, cls, p_full):
-    """Box (percent of frame) around the object: classify sliding windows of the frame and return the
-    union of the smallest-scale windows that still score the predicted class. If nothing smaller than
-    the full frame holds the class, the object fills the frame. SigLIP's patch tokens and pooling
-    attention were tried first, but both are dominated by background artifact tokens."""
-    h = st["h"]
-    W, H = img.size
-    for scale, n in ((0.5, 3), (0.72, 2)):
-        hits = []
-        for i in range(n):
-            for j in range(n):
-                x0 = (W * (1 - scale)) * (j / (n - 1))
-                y0 = (H * (1 - scale)) * (i / (n - 1))
-                crop = img.crop((round(x0), round(y0), round(x0 + W * scale), round(y0 + H * scale)))
-                f = _embed(st, crop)
-                p = _softmax((h["probe_W"] @ f + h["probe_b"]) / st["th"].get("temperature", 1.0))
-                if int(np.argmax(p)) == cls and p[cls] >= max(0.6, 0.85 * p_full):
-                    hits.append((x0, y0, x0 + W * scale, y0 + H * scale))
-        if hits:
-            xs0, ys0, xs1, ys1 = zip(*hits)
-            return min(xs0) / W, min(ys0) / H, max(xs1) / W, max(ys1) / H
-    return 0.0, 0.0, 1.0, 1.0
-
-
 def _classify(img: Image.Image) -> dict:
     st = _load()
     h = st["h"]
@@ -130,10 +106,10 @@ def _classify(img: Image.Image) -> dict:
 
     detections = []
     if not is_ood:
-        x0, y0, x1, y1 = _locate(st, img, int(order[0]), best)
+        # The probe classifies the whole frame, so the honest region is the whole frame. Per-object
+        # boxes need the OWLv2 detector (backend `?detect=true`), which is too large for a Vercel function.
         detections.append({"label": top3[0]["label"].upper(), "confidence": top3[0]["confidence"],
-                           "x": round(x0 * 100, 1), "y": round(y0 * 100, 1),
-                           "width": round((x1 - x0) * 100, 1), "height": round((y1 - y0) * 100, 1)})
+                           "x": 0.0, "y": 0.0, "width": 100.0, "height": 100.0, "scope": "frame"})
 
     if is_ood:
         expl = (f"No defence object recognised. The image looks most like: {closest.split(':', 1)[1]}. "
