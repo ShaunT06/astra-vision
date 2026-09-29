@@ -367,4 +367,4 @@ and the starter images keep their individual Wikimedia Commons licences (see `cr
 
 ## Contributing
 
-Issues and pull requests are welcome. See [CONTRIBUTING.md](../CONTRIBUTING.md).
+Issues and pull requests are welcome.
