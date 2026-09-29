@@ -9,3 +9,19 @@ uploads/
 *.db
 .pytest_cache/
 .claude/
+storage/
+data/cache/
+pytest-cache-files-*/
+
+# Node / web
+node_modules/
+web/dist/
+.vercel/
+
+# Tooling & OS
+.ruff_cache/
+.mypy_cache/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
