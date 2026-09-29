@@ -7,6 +7,23 @@
 
 ---
 
+## 0. Status — what changed during the build (29 Sep)
+
+| Plan said | What was built | Why |
+|---|---|---|
+| Kaggle datasets + civilian class | **ASTRA starter set only** (5 classes), no civilian class | No time to download; civilian objects handled by the zero-shot OOD gate instead |
+| Fine-tune EfficientNet-B0 | **Frozen backbone + logistic-regression head** for SigLIP 2 *and* EfficientNet-B0 | Only 117 clean images — full fine-tuning would overfit |
+| 70/15/15 split | **Group-aware 5-fold CV × 3 repeats** | A 15% test split is ~18 images; groups stop photo series leaking |
+| Main model EfficientNet-B0 | **SigLIP 2 + trained head** is the default | 99.2% vs 91.2% held-out accuracy |
+| — | **Data audit**: 33/150 starter images excluded (`dataset/exclusions.csv`) | Maps, drone-shot landscapes, ceremonies, interiors mislabelled as objects |
+| Plain Grad-CAM | Grad-CAM with **eigen-smoothing** for the ViT | Plain Grad-CAM highlighted background tokens on SigLIP |
+| Run on Windows | Run in **WSL (Ubuntu)** | Windows Smart App Control blocks PyTorch DLLs |
+| Weights in `models/` | Trained heads (20 KB each) + `thresholds.json` committed in `models/` | Small enough for git |
+
+Done: MUST ✅ · SHOULD ✅ · BONUS ✅ (all 7). Remaining: frontend, deployment, video.
+
+---
+
 ## 1. Model stack (all free, open licences)
 
 ### Core models (what we build with)
