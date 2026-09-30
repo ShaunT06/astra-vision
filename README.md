@@ -1,6 +1,6 @@
 # ASTRA VISION
 
-Explainable defence object recognition. Upload an image and get the class, a calibrated confidence, top-3 alternatives, a Grad-CAM heatmap and a plain-English explanation. It warns when unsure and rejects images with no defence object.
+Explainable defence object recognition. Upload an image and get the class, a calibrated confidence, top-3 alternatives and a plain-English explanation. It warns when unsure and rejects images with no defence object.
 
 **[Live demo](https://sentinel-vision-seven.vercel.app)** · [How the model works](docs/model-explained.md) · [Technical details](docs/technical-details.md) · Challenge 02 (ASTRA 3-Day Build), solo entry
 
@@ -32,21 +32,19 @@ flowchart TD
     H --> CAL[Calibration<br/>top-3 and uncertainty flag]
     V --> OOD[Out-of-distribution gate]
     V --> DET[OWLv2 detector<br/>crops classified by head]
-    CAL --> XAI[Grad-CAM heatmap]
     CAL --> EXP[Explanation]
     OOD --> EXP
     EXP --> DB[(SQLite history)]
-    XAI --> FE
     EXP --> FE
 ```
 
-Every classifier is a frozen pretrained encoder plus a small linear head, so one calibration, Grad-CAM and evaluation path serves all models. More in [technical details](docs/technical-details.md#architecture).
+Every classifier is a frozen pretrained encoder plus a small linear head, so one calibration and evaluation path serves all models. More in [technical details](docs/technical-details.md#architecture).
 
 ## Features
 
 - 5 classes: aircraft, helicopter, drone/UAV, land vehicle, naval vessel
 - Top-3, calibrated confidence and an "uncertain" flag
-- Grad-CAM heatmaps and text explanations
+- Plain-English text explanations
 - Multi-object detection (OWLv2), batch/zip upload, prediction history
 - Robust input handling: corrupt, oversized and non-image files return clear errors
 - React front end (`web/`) deployed on Vercel

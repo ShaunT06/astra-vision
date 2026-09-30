@@ -2,7 +2,7 @@
 
 # ASTRA VISION
 
-**Free, explainable defence object recognition — upload an image, get a class, a calibrated confidence, a heatmap and a plain-English explanation.**
+**Free, explainable defence object recognition — upload an image, get a class, a calibrated confidence and a plain-English explanation.**
 
 [![CI](https://github.com/ShaunT06/astra-vision/actions/workflows/ci.yml/badge.svg)](https://github.com/ShaunT06/astra-vision/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.12%2B-blue)
@@ -16,11 +16,11 @@
 
 ASTRA Software Team 3-Day Build Challenge · Challenge 02 (AI-Based Defence Object Recognition) · solo entry
 
-Upload an image → the system identifies the defence object (military aircraft, helicopter, drone/UAV, land vehicle, naval vessel), shows a calibrated confidence, top-3 alternatives, a heatmap of *where* the model looked, and a plain-English explanation. It warns when it is unsure and says so when the image contains no defence object at all. A detection mode finds and labels multiple objects in one image.
+Upload an image → the system identifies the defence object (military aircraft, helicopter, drone/UAV, land vehicle, naval vessel), shows a calibrated confidence, top-3 alternatives and a plain-English explanation. It warns when it is unsure and says so when the image contains no defence object at all. A detection mode finds and labels multiple objects in one image.
 
 Everything is **free and runs locally**: open-weight models, no paid APIs, no API keys.
 
-**Live demo: [sentinel-vision-seven.vercel.app](https://sentinel-vision-seven.vercel.app)** (ONNX classifier; heatmaps and multi-object detection need the full backend, see [Web app](#web-app-web)).
+**Live demo: [sentinel-vision-seven.vercel.app](https://sentinel-vision-seven.vercel.app)** (ONNX classifier; multi-object detection needs the full backend, see [Web app](#web-app-web)).
 
 ---
 
@@ -70,7 +70,6 @@ Everything is **free and runs locally**: open-weight models, no paid APIs, no AP
 | Bonus | Implementation |
 |---|---|
 | Transfer learning on own data | Logistic-regression heads trained on frozen SigLIP 2 / EfficientNet-B0 features |
-| Explainable AI | Grad-CAM heatmaps for every model (eigen-smoothed for the ViT) |
 | Model comparison | 3 models, identical folds, same metrics |
 | Performance metrics | Accuracy, top-3, per-class precision/recall/F1, confusion matrices, calibration (ECE/NLL) |
 | Multi-object detection | OWLv2 open-vocabulary boxes → each crop classified by our model |
@@ -84,7 +83,7 @@ Everything is **free and runs locally**: open-weight models, no paid APIs, no AP
 
 A React + Vite front end ("Sentinel Vision"): radar intro, hero, telemetry archive and a classification workbench. It calls
 `POST /api/classify`, which returns `{id, filename, label, confidence, detections[{x,y,width,height}], mode, processed_at}`
-from the real SigLIP / EfficientNet models (boxes come from the Grad-CAM hot region, or OWLv2 with `?detect=true`).
+from the real SigLIP / EfficientNet models (boxes come from OWLv2 with `?detect=true`).
 
 ```bash
 uvicorn app.main:app --port 8000      # backend
@@ -97,7 +96,7 @@ gate; it matches the PyTorch labels on 30/30 starter images. Regenerate the mode
 and re-check with `python -m scripts.check_onnx_parity`.
 
 Serverless limits: uploads are capped near 4 MB (the UI shrinks large frames first) and the function reports a whole-frame
-classification region. Per-object boxes (OWLv2) and Grad-CAM heatmaps need PyTorch, so they exist only in the FastAPI
+classification region. Per-object boxes (OWLv2) need PyTorch, so they exist only in the FastAPI
 backend (`app/main.py`, `Dockerfile`).
 
 ---
@@ -117,13 +116,11 @@ flowchart LR
       ENC -->|EfficientNet-B0| H3[Trained linear head]
       H1 & H2 & H3 --> POST[Temperature scaling<br/>top-3 · uncertainty]
       P --> OOD[OOD gate<br/>SigLIP 2 vs non-defence prompts]
-      POST --> XAI[Grad-CAM heatmap]
       OOD --> EXP[Explanation text]
       POST --> EXP
       P --> DET[OWLv2 detector] --> CROP[Crop each box] --> H1
       EXP --> DB[(SQLite history)]
     end
-    XAI --> FE
     EXP --> FE
     DB --> FE
     FE --> U
@@ -135,14 +132,13 @@ flowchart LR
 3. **Encoder + head** (`app/models/`) — every classifier is *frozen backbone → linear head*.
 4. **Post-processing** (`app/inference.py`) — softmax with a fitted temperature, top-3, uncertainty flags.
 5. **OOD gate** — SigLIP 2 compares the image with defence prompts vs. non-defence prompts (animal, person, food, landscape, map/diagram, civilian car/airliner/ship…). If a non-defence concept wins, the answer is *"No defence object recognised"*.
-6. **Grad-CAM** — gradients of the predicted class flow back to the last conv layer (CNN) or last transformer block (ViT).
-7. **History** (`app/db.py`) — stored in SQLite with a thumbnail.
+6. **History** (`app/db.py`) — stored in SQLite with a thumbnail.
 
 **Offline pipeline** (`scripts/`): `prepare_data` (audit exclusions, validation, near-duplicate grouping) → `train` (fit heads) → `evaluate` (cross-validated comparison, calibration, thresholds, reports).
 
 ### Why this architecture
 - **Frozen backbone + linear head** instead of fine-tuning a whole network: with ~23 images per class, full fine-tuning overfits; linear probes on strong pretrained features are the standard few-shot recipe, train in seconds on a laptop CPU, and the trained head is only 20 KB.
-- **Every model ends in `nn.Linear`**, so one Grad-CAM implementation, one calibration method and one evaluation script serve all three models, making the comparison fair.
+- **Every model ends in `nn.Linear`**, so one calibration method and one evaluation script serve all three models, making the comparison fair.
 - **Two-stage detection** (detector for *where*, our classifier for *what*) adds bounding boxes without any box-labelled training data.
 - **API-first** — the backend is frontend-agnostic JSON with auto-generated docs at `/docs`.
 
@@ -155,7 +151,6 @@ flowchart LR
 | **SigLIP 2** `google/siglip2-base-patch16-224` | Apache 2.0 | Main encoder, zero-shot baseline, OOD gate | Google's 2025 successor to CLIP. Trained on billions of image–text pairs, so it already "knows" tanks, frigates and quadcopters, and it can compare images with text — which gives us zero-shot classification and the OOD gate for free. |
 | **EfficientNet-B0** (timm) | Apache 2.0 | Comparison model | A small (5M-parameter) ImageNet CNN — the classic transfer-learning baseline. Shows how much a modern vision-language encoder adds (+8 points). |
 | **OWLv2** `google/owlv2-base-patch16-ensemble` | Apache 2.0 | Detection | Open-vocabulary detector: finds boxes for text queries like "a tank" without box-labelled data. |
-| **Grad-CAM** (`grad-cam`) | MIT | Explainability | Standard, model-agnostic class-activation maps. |
 
 Rejected: YOLO-World / Ultralytics (GPL/AGPL licence, and standard YOLO needs box labels), Grounding DINO 1.5/1.6 (paid API), cloud vision APIs (not free), full fine-tuning (too little data).
 
@@ -168,7 +163,7 @@ Rejected: YOLO-World / Ultralytics (GPL/AGPL licence, and standard YOLO needs bo
 ├── app/                 FastAPI backend
 │   ├── main.py          routes: predict, detect, batch, history, metrics, classify
 │   ├── validation.py    image validation + preprocessing (EXIF, colour modes, size limits)
-│   ├── inference.py     calibration, top-3, uncertainty, OOD gate, explanations, Grad-CAM
+│   ├── inference.py     calibration, top-3, uncertainty, OOD gate, explanations
 │   ├── detector.py      OWLv2 open-vocabulary detection
 │   ├── db.py            SQLite prediction history
 │   ├── config.py        settings (env-overridable)
@@ -176,7 +171,7 @@ Rejected: YOLO-World / Ultralytics (GPL/AGPL licence, and standard YOLO needs bo
 ├── scripts/             offline pipeline: prepare_data, train, evaluate, export_onnx, check_onnx_parity
 ├── models/              trained heads (~20 KB each) and tuned thresholds
 ├── dataset/             manifest.csv and exclusions.csv (data audit)
-├── reports/             metrics.json, confusion matrices, per-model error lists, Grad-CAM comparison
+├── reports/             metrics.json, confusion matrices, per-model error lists
 ├── tests/               pytest suite
 ├── web/                 React + Vite front end and Vercel serverless (ONNX) function
 ├── docs/                build plan and design notes
@@ -229,7 +224,7 @@ docker run -p 7860:7860 astra-vision
 
 | Method | Endpoint | Purpose |
 |---|---|---|
-| `POST` | `/api/predict?model=siglip-probe` | Classify one image: class, confidence, top-3, uncertainty, OOD result, explanation, Grad-CAM heatmap |
+| `POST` | `/api/predict?model=siglip-probe` | Classify one image: class, confidence, top-3, uncertainty, OOD result, explanation |
 | `POST` | `/api/detect` | Detect and classify every object: boxes, labels, counts, annotated image |
 | `POST` | `/api/batch` | Many images or a `.zip`: per-image results, summary, CSV |
 | `GET` | `/api/history` · `/api/history/{id}` | Prediction gallery |
@@ -240,7 +235,7 @@ docker run -p 7860:7860 astra-vision
 
 Models: `siglip-probe` (default), `siglip-zeroshot`, `effnet-probe`.
 
-Example response (`/api/predict`, values illustrative, heatmap truncated):
+Example response (`/api/predict`, values illustrative):
 ```json
 {
   "model": "siglip-probe",
@@ -251,8 +246,7 @@ Example response (`/api/predict`, values illustrative, heatmap truncated):
            {"label": "Military Aircraft", "confidence": 0.0071}],
   "uncertain": false,
   "defence_object_detected": true,
-  "explanation": "Predicted Military Helicopter with 97% confidence. The model associates this class with a main rotor, tail boom and cabin-shaped fuselage; ...",
-  "heatmap": "data:image/jpeg;base64,..."
+  "explanation": "Predicted Military Helicopter with 97% confidence. The model associates this class with a main rotor, tail boom and cabin-shaped fuselage; ..."
 }
 ```
 
@@ -286,7 +280,7 @@ pytest tests/test_validation.py  # 20 tests, no models needed (used in CI)
 **Example inputs → outputs**
 | Input | Output |
 |---|---|
-| Black Hawk helicopter photo (training image) | Military Helicopter, ~100%, heatmap on the fuselage |
+| Black Hawk helicopter photo (training image) | Military Helicopter, ~100% |
 | Plain green square | *No defence object recognised* (closest concept: document or diagram) |
 | Formation of 5 helicopters (detect mode) | 5 boxes: 4 × Military Helicopter, 1 distant one labelled Drone / UAV |
 | Text file renamed `photo.jpg` | `415 unsupported_format` |
@@ -298,9 +292,6 @@ pytest tests/test_validation.py  # 20 tests, no models needed (used in CI)
 - **Very small distant objects** — a distant helicopter in a formation was labelled *Drone / UAV* in detect mode.
 - **Busy scenes** — on a carrier deck the detector returns overlapping boxes for ship parts.
 
-### Debugging story: noisy heatmaps on the vision transformer
-Plain Grad-CAM on EfficientNet highlighted the objects, but on SigLIP 2 it lit up random patches of sky and background. That's a known ViT behaviour: a few background tokens act as "scratch memory" with very high activations (*Vision Transformers Need Registers*, Darcet et al. 2023). I compared six variants (different layers, Grad-CAM++, LayerCAM, eigen-smoothing) on the same four images — [`reports/gradcam_variants_siglip.jpg`](../reports/gradcam_variants_siglip.jpg) — and **eigen-smoothing on the last block** was the only one that consistently highlighted the object, so the ViT uses that.
-
 ---
 
 ## Limitations
@@ -309,7 +300,7 @@ Plain Grad-CAM on EfficientNet highlighted the objects, but on SigLIP 2 it lit u
 - **5 classes only** — no fine-grained types (F-16 vs Su-30), no civilian class; civilian objects are handled only by the zero-shot OOD gate.
 - **Single-label classification** — scenes with two object types get one label (use detect mode).
 - **OOD gate is prompt-based** — it catches unrelated content but lets through defence-*context* images (interiors, ceremonies, drawings); 3.4% of real images are wrongly rejected.
-- **CPU latency** — ~2–4 s per classification with heatmap, ~7–12 s for detection.
+- **CPU latency** — ~2–4 s per classification, ~7–12 s for detection.
 - **Not for operational use** — a learning project on public imagery; not validated for any real-world decision-making.
 
 ## Future improvements
@@ -337,7 +328,7 @@ Used For:
 - Documentation
 
 Major AI-Assisted Components:
-- <fill in honestly, e.g. backend API, validation layer, evaluation script, Grad-CAM integration>
+- <fill in honestly, e.g. backend API, validation layer, evaluation script>
 
 Personally Implemented / Modified:
 - <fill in honestly: what you wrote, changed, decided or verified yourself>
@@ -346,7 +337,7 @@ Validation:
 - 35 automated tests (bad inputs + end-to-end API)
 - Group-aware cross-validation with every held-out error inspected
 - Manual audit of all 150 starter images
-- Visual inspection of Grad-CAM heatmaps and detection boxes
+- Visual inspection of detection boxes
 ```
 
 ---
@@ -355,7 +346,7 @@ Validation:
 
 - **Images:** ASTRA Challenge starter bundle — Wikimedia Commons contributors under CC0 / CC BY / CC BY-SA / public domain; per-image attribution in the bundle's `credits.csv`.
 - **Models:** SigLIP 2 and OWLv2 (Google, Apache 2.0), EfficientNet-B0 via timm (Ross Wightman, Apache 2.0).
-- **Libraries:** PyTorch, Hugging Face Transformers, timm, pytorch-grad-cam (Jacob Gildenblat, MIT), FastAPI, scikit-learn, Pillow, ImageHash.
+- **Libraries:** PyTorch, Hugging Face Transformers, timm, FastAPI, scikit-learn, Pillow, ImageHash.
 - Darcet et al., *Vision Transformers Need Registers*, ICLR 2024.
 
 ---
